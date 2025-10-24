@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LedgerPay Integration Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #334155; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        .test-section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+        .test-card { background: #f8fafc; padding: 20px; border-radius: 8px; border: 2px solid #e2e8f0; }
+        .test-card h3 { color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .status { display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-left: 10px; }
+        .status.running { background: #dcfce7; color: #166534; }
+        .status.testing { background: #fef3c7; color: #92400e; }
+        .status.success { background: #dcfce7; color: #166534; }
+        .status.error { background: #fef2f2; color: #dc2626; }
+        .btn { padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; margin: 8px; font-weight: 500; transition: all 0.2s; }
+        .btn:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
+        .btn.success { background: #10b981; }
+        .btn.error { background: #ef4444; }
+        .result { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 15px; font-family: 'SF Mono', Monaco, monospace; font-size: 13px; line-height: 1.4; }
+        .result.success { background: #dcfce7; border: 2px solid #bbf7d0; }
+        .result.error { background: #fef2f2; border: 2px solid #fecaca; }
+        .progress { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin: 15px 0; }
+        .progress-bar { height: 100%; background: #3b82f6; transition: width 0.3s ease; }
+        .summary { background: #f0f9ff; padding: 20px; border-radius: 8px; border: 2px solid #bae6fd; margin-top: 20px; }
+        .flow-diagram { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; padding: 20px; background: #f8fafc; border-radius: 8px; }
+        .flow-step { text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 150px; }
+        .flow-arrow { font-size: 24px; color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 LedgerPay Integration Test Suite</h1>
+            <p>Comprehensive frontend-backend integration testing</p>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+            </div>
+            <p id="progress-text">Ready to start integration testing</p>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Integration Flow</h2>
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <h3>🔐 Auth</h3>
+                    <p>Get JWT Token</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h3>👥 Accounts</h3>
+                    <p>Create Account</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h3>📝 Posting</h3>
+                    <p>Post Transaction</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h3>🔍 Query</h3>
+                    <p>Query Balance</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h3>📊 Audit</h3>
+                    <p>View Logs</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Individual Service Tests</h2>
+            <div class="test-grid">
+                <div class="test-card">
+                    <h3>🔐 Auth Service <span class="status running" id="auth-status">READY</span></h3>
+                    <p>JWT Token Generation</p>
+                    <button class="btn" onclick="testAuthService()">Test Authentication</button>
+                    <div id="auth-result" class="result">Click to test JWT token generation</div>
+                </div>
+
+                <div class="test-card">
+                    <h3>👥 Accounts Service <span class="status running" id="accounts-status">READY</span></h3>
+                    <p>Account Management</p>
+                    <button class="btn" onclick="testAccountsService()" disabled id="accounts-btn">Test Accounts</button>
+                    <div id="accounts-result" class="result">Requires JWT token first</div>
+                </div>
+
+                <div class="test-card">
+                    <h3>📝 Posting Service <span class="status running" id="posting-status">READY</span></h3>
+                    <p>Transaction Posting</p>
+                    <button class="btn" onclick="testPostingService()" disabled id="posting-btn">Test Posting</button>
+                    <div id="posting-result" class="result">Requires account first</div>
+                </div>
+
+                <div class="test-card">
+                    <h3>🔍 Query Service <span class="status running" id="query-status">READY</span></h3>
+                    <p>Balance Queries</p>
+                    <button class="btn" onclick="testQueryService()" disabled id="query-btn">Test Query</button>
+                    <div id="query-result" class="result">Requires account first</div>
+                </div>
+
+                <div class="test-card">
+                    <h3>📊 Audit Service <span class="status running" id="audit-status">READY</span></h3>
+                    <p>Audit Logging</p>
+                    <button class="btn" onclick="testAuditService()" disabled id="audit-btn">Test Audit</button>
+                    <div id="audit-result" class="result">Requires activity first</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔄 End-to-End Integration Test</h2>
+            <p>This will test the complete flow from authentication to audit logging.</p>
+            <button class="btn" onclick="runFullIntegrationTest()" id="integration-btn">🚀 Run Full Integration Test</button>
+            <div id="integration-result" class="result">Click to run complete integration test</div>
+        </div>
+
+        <div class="summary" id="summary-section" style="display: none;">
+            <h3>📊 Integration Test Summary</h3>
+            <div id="summary-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+        let testAccount = null;
+        let testResults = {
+            auth: false,
+            accounts: false,
+            posting: false,
+            query: false,
+            audit: false
+        };
+
+        function updateProgress(step, total) {
+            const percentage = (step / total) * 100;
+            document.getElementById('progress-bar').style.width = percentage + '%';
+            document.getElementById('progress-text').textContent = `Step ${step} of ${total} completed`;
+        }
+
+        function updateStatus(service, status, message) {
+            const statusEl = document.getElementById(service + '-status');
+            const resultEl = document.getElementById(service + '-result');
+            
+            statusEl.textContent = status.toUpperCase();
+            statusEl.className = 'status ' + status;
+            
+            if (message) {
+                resultEl.textContent = message;
+                resultEl.className = 'result ' + status;
+            }
+        }
+
+        async function testAuthService() {
+            updateStatus('auth', 'testing', 'Getting JWT token...');
+            updateProgress(1, 5);
+            
+            try {
+                const response = await fetch('http://localhost:8090/api/v1/auth/login?username=testuser&tenantId=550e8400-e29b-41d4-a716-446655440000&role=USER', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.accessToken;
+                    updateStatus('auth', 'success', `✅ SUCCESS! JWT Token: ${authToken.substring(0, 50)}...`);
+                    testResults.auth = true;
+                    
+                    // Enable dependent services
+                    document.getElementById('accounts-btn').disabled = false;
+                    document.getElementById('accounts-status').textContent = 'READY';
+                } else {
+                    updateStatus('auth', 'error', `❌ ERROR: ${response.status} ${response.statusText}`);
+                    testResults.auth = false;
+                }
+            } catch (error) {
+                updateStatus('auth', 'error', `❌ CONNECTION ERROR: ${error.message}`);
+                testResults.auth = false;
+            }
+        }
+
+        async function testAccountsService() {
+            if (!authToken) {
+                updateStatus('accounts', 'error', '❌ Please authenticate first!');
+                return;
+            }
+            
+            updateStatus('accounts', 'testing', 'Creating test account...');
+            updateProgress(2, 5);
+            
+            try {
+                const accountData = {
+                    code: 'INTEGRATION-TEST-' + Date.now(),
+                    name: 'Integration Test Account',
+                    type: 'ASSET',
+                    currency: 'USD',
+                    status: 'ACTIVE',
+                    ownerType: 'CUSTOMER',
+                    ownerRefId: '550e8400-e29b-41d4-a716-446655440001'
+                };
+                
+                const response = await fetch('http://localhost:8081/api/v1/accounts', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(accountData)
+                });
+                
+                if (response.ok) {
+                    testAccount = await response.json();
+                    updateStatus('accounts', 'success', `✅ SUCCESS! Account created: ${testAccount.name} (${testAccount.id})`);
+                    testResults.accounts = true;
+                    
+                    // Enable dependent services
+                    document.getElementById('posting-btn').disabled = false;
+                    document.getElementById('query-btn').disabled = false;
+                    document.getElementById('audit-btn').disabled = false;
+                } else {
+                    updateStatus('accounts', 'error', `❌ ERROR: ${response.status} ${response.statusText}`);
+                    testResults.accounts = false;
+                }
+            } catch (error) {
+                updateStatus('accounts', 'error', `❌ CONNECTION ERROR: ${error.message}`);
+                testResults.accounts = false;
+            }
+        }
+
+        async function testPostingService() {
+            if (!testAccount) {
+                updateStatus('posting', 'error', '❌ Please create account first!');
+                return;
+            }
+            
+            updateStatus('posting', 'testing', 'Posting test transaction...');
+            updateProgress(3, 5);
+            
+            try {
+                const transactionData = {
+                    tenantId: '550e8400-e29b-41d4-a716-446655440000',
+                    reference: 'INTEGRATION-TX-' + Date.now(),
+                    timestamp: new Date().toISOString(),
+                    lines: [
+                        {
+                            accountId: testAccount.id,
+                            debit: 100.00,
+                            credit: null,
+                            memo: 'Integration test debit'
+                        },
+                        {
+                            accountId: testAccount.id,
+                            debit: null,
+                            credit: 100.00,
+                            memo: 'Integration test credit'
+                        }
+                    ]
+                };
+                
+                const response = await fetch('http://localhost:8082/api/v1/transactions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(transactionData)
+                });
+                
+                if (response.ok) {
+                    const transaction = await response.json();
+                    updateStatus('posting', 'success', `✅ SUCCESS! Transaction posted: ${transactionData.reference}`);
+                    testResults.posting = true;
+                } else {
+                    updateStatus('posting', 'error', `❌ ERROR: ${response.status} ${response.statusText}`);
+                    testResults.posting = false;
+                }
+            } catch (error) {
+                updateStatus('posting', 'error', `❌ CONNECTION ERROR: ${error.message}`);
+                testResults.posting = false;
+            }
+        }
+
+        async function testQueryService() {
+            if (!testAccount) {
+                updateStatus('query', 'error', '❌ Please create account first!');
+                return;
+            }
+            
+            updateStatus('query', 'testing', 'Querying account balance...');
+            updateProgress(4, 5);
+            
+            try {
+                const response = await fetch(`http://localhost:8083/api/v1/accounts/${testAccount.id}/balance`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    }
+                });
+                
+                if (response.ok) {
+                    const balance = await response.json();
+                    updateStatus('query', 'success', `✅ SUCCESS! Balance: ${JSON.stringify(balance)}`);
+                    testResults.query = true;
+                } else {
+                    updateStatus('query', 'error', `❌ ERROR: ${response.status} ${response.statusText}`);
+                    testResults.query = false;
+                }
+            } catch (error) {
+                updateStatus('query', 'error', `❌ CONNECTION ERROR: ${error.message}`);
+                testResults.query = false;
+            }
+        }
+
+        async function testAuditService() {
+            updateStatus('audit', 'testing', 'Checking audit logs...');
+            updateProgress(5, 5);
+            
+            try {
+                const response = await fetch('http://localhost:8084/api/v1/audit?tenantId=550e8400-e29b-41d4-a716-446655440000');
+                
+                if (response.ok) {
+                    const auditLogs = await response.json();
+                    updateStatus('audit', 'success', `✅ SUCCESS! Found ${auditLogs.length} audit log entries`);
+                    testResults.audit = true;
+                } else {
+                    updateStatus('audit', 'error', `❌ ERROR: ${response.status} ${response.statusText}`);
+                    testResults.audit = false;
+                }
+            } catch (error) {
+                updateStatus('audit', 'error', `❌ CONNECTION ERROR: ${error.message}`);
+                testResults.audit = false;
+            }
+        }
+
+        async function runFullIntegrationTest() {
+            const btn = document.getElementById('integration-btn');
+            btn.disabled = true;
+            btn.textContent = '🔄 Running Integration Test...';
+            
+            const resultDiv = document.getElementById('integration-result');
+            resultDiv.textContent = 'Starting full integration test...';
+            resultDiv.className = 'result';
+            
+            try {
+                // Step 1: Authentication
+                await testAuthService();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Step 2: Account Creation
+                await testAccountsService();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Step 3: Transaction Posting
+                await testPostingService();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Step 4: Query Balance
+                await testQueryService();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Step 5: Audit Logs
+                await testAuditService();
+                
+                // Generate Summary
+                generateSummary();
+                
+                btn.textContent = '✅ Integration Test Complete';
+                btn.className = 'btn success';
+                
+            } catch (error) {
+                resultDiv.textContent = `❌ INTEGRATION TEST FAILED: ${error.message}`;
+                resultDiv.className = 'result error';
+                btn.textContent = '❌ Integration Test Failed';
+                btn.className = 'btn error';
+            }
+        }
+
+        function generateSummary() {
+            const summarySection = document.getElementById('summary-section');
+            const summaryContent = document.getElementById('summary-content');
+            
+            const passedTests = Object.values(testResults).filter(result => result).length;
+            const totalTests = Object.keys(testResults).length;
+            
+            let summaryHtml = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="text-align: center; padding: 15px; background: ${testResults.auth ? '#dcfce7' : '#fef2f2'}; border-radius: 8px;">
+                        <h4>🔐 Auth Service</h4>
+                        <p>${testResults.auth ? '✅ PASSED' : '❌ FAILED'}</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: ${testResults.accounts ? '#dcfce7' : '#fef2f2'}; border-radius: 8px;">
+                        <h4>👥 Accounts Service</h4>
+                        <p>${testResults.accounts ? '✅ PASSED' : '❌ FAILED'}</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: ${testResults.posting ? '#dcfce7' : '#fef2f2'}; border-radius: 8px;">
+                        <h4>📝 Posting Service</h4>
+                        <p>${testResults.posting ? '✅ PASSED' : '❌ FAILED'}</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: ${testResults.query ? '#dcfce7' : '#fef2f2'}; border-radius: 8px;">
+                        <h4>🔍 Query Service</h4>
+                        <p>${testResults.query ? '✅ PASSED' : '❌ FAILED'}</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: ${testResults.audit ? '#dcfce7' : '#fef2f2'}; border-radius: 8px;">
+                        <h4>📊 Audit Service</h4>
+                        <p>${testResults.audit ? '✅ PASSED' : '❌ FAILED'}</p>
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 20px; background: ${passedTests === totalTests ? '#dcfce7' : '#fef2f2'}; border-radius: 8px;">
+                    <h3>🎯 Overall Result: ${passedTests}/${totalTests} Tests Passed</h3>
+                    <p>${passedTests === totalTests ? '🎉 All integration tests passed! Frontend-backend integration is working perfectly.' : '⚠️ Some tests failed. Check individual service results above.'}</p>
+                </div>
+            `;
+            
+            summaryContent.innerHTML = summaryHtml;
+            summarySection.style.display = 'block';
+        }
+
+        // Auto-start authentication on page load
+        window.onload = function() {
+            setTimeout(testAuthService, 2000);
+        };
+    </script>
+</body>
+</html>

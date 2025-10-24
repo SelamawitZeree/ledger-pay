@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Test - LedgerPay</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-link {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            margin: 5px;
+            transition: background 0.2s;
+        }
+        .test-link:hover {
+            background: #2563eb;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .success { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+        .error { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+        .info { background: #dbeafe; color: #1e40af; border: 1px solid #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🧭 LedgerPay Navigation Test</h1>
+    
+    <div class="test-section">
+        <h2>Sidebar Navigation Links</h2>
+        <p>Test the sidebar navigation buttons:</p>
+        
+        <a href="/login" class="test-link">Login Page</a>
+        <a href="/register" class="test-link">Register Page</a>
+        <a href="/dashboard" class="test-link">Dashboard</a>
+        <a href="/admin" class="test-link">Admin Panel</a>
+        
+        <div class="status info">
+            <strong>Expected Behavior:</strong><br>
+            • Login and Register buttons should work when not authenticated<br>
+            • Dashboard and Admin should redirect to login if not authenticated<br>
+            • Sidebar should show different menu items based on authentication status
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Authentication State Test</h2>
+        <div id="authStatus" class="status info">
+            Checking authentication status...
+        </div>
+        
+        <button onclick="testAuthStatus()" class="test-link">Check Auth Status</button>
+        <button onclick="clearAuth()" class="test-link" style="background: #ef4444;">Clear Auth</button>
+        <button onclick="setMockAuth()" class="test-link" style="background: #10b981;">Set Mock Auth</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Form UI Differences</h2>
+        <div class="status info">
+            <strong>Login Form:</strong><br>
+            • Blue gradient background<br>
+            • Simple form with username, password, org ID, role<br>
+            • Focused on quick access<br><br>
+            
+            <strong>Register Form:</strong><br>
+            • Green gradient background<br>
+            • Extended form with first name, last name, email, etc.<br>
+            • Focused on account creation
+        </div>
+    </div>
+
+    <script>
+        function testAuthStatus() {
+            const token = localStorage.getItem('lp_token');
+            const tenantId = localStorage.getItem('lp_tenantId');
+            const role = localStorage.getItem('lp_role');
+            
+            const statusDiv = document.getElementById('authStatus');
+            
+            if (token && tenantId && role) {
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = `
+                    <strong>✅ Authenticated</strong><br>
+                    • Token: ${token.substring(0, 20)}...<br>
+                    • Tenant: ${tenantId}<br>
+                    • Role: ${role}
+                `;
+            } else {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `
+                    <strong>❌ Not Authenticated</strong><br>
+                    • Token: ${token ? 'Present' : 'Missing'}<br>
+                    • Tenant: ${tenantId || 'Missing'}<br>
+                    • Role: ${role || 'Missing'}
+                `;
+            }
+        }
+
+        function clearAuth() {
+            localStorage.removeItem('lp_token');
+            localStorage.removeItem('lp_tenantId');
+            localStorage.removeItem('lp_role');
+            localStorage.removeItem('lp_username');
+            localStorage.removeItem('lp_loginTime');
+            testAuthStatus();
+        }
+
+        function setMockAuth() {
+            localStorage.setItem('lp_token', 'mock-jwt-token-12345');
+            localStorage.setItem('lp_tenantId', 'TENANT-LEDGER-001');
+            localStorage.setItem('lp_role', 'ADMIN');
+            localStorage.setItem('lp_username', 'admin');
+            localStorage.setItem('lp_loginTime', new Date().toISOString());
+            testAuthStatus();
+        }
+
+        // Check auth status on page load
+        window.addEventListener('load', testAuthStatus);
+    </script>
+</body>
+</html>

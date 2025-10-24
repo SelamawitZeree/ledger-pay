@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledger Pay Service Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .service { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .test-btn:hover { background: #0056b3; }
+        .result { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; min-height: 50px; font-family: monospace; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Ledger Pay Service Tester</h1>
+        <p>Test all your microservices from this page.</p>
+
+        <div class="service">
+            <h3>🔐 Auth Service (Port 8090)</h3>
+            <button class="test-btn" onclick="testAuth()">Get JWT Token</button>
+            <div id="auth-result" class="result">Click to get JWT token</div>
+        </div>
+
+        <div class="service">
+            <h3>👥 Accounts Service (Port 8081)</h3>
+            <button class="test-btn" onclick="testAccounts()">List Accounts</button>
+            <div id="accounts-result" class="result">Get JWT token first</div>
+        </div>
+
+        <div class="service">
+            <h3>📝 Posting Service (Port 8082)</h3>
+            <button class="test-btn" onclick="testPosting()">Test Balance</button>
+            <div id="posting-result" class="result">Click to test</div>
+        </div>
+
+        <div class="service">
+            <h3>🔍 Query Service (Port 8083)</h3>
+            <button class="test-btn" onclick="testQuery()">Test Webhook</button>
+            <div id="query-result" class="result">Click to test</div>
+        </div>
+
+        <div class="service">
+            <h3>📊 Audit Service (Port 8084)</h3>
+            <button class="test-btn" onclick="testAudit()">List Audit Logs</button>
+            <div id="audit-result" class="result">Click to test</div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+
+        async function testAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.textContent = 'Getting JWT token...';
+            
+            try {
+                const response = await fetch('http://localhost:8090/api/v1/auth/login?username=testuser&tenantId=550e8400-e29b-41d4-a716-446655440000&role=USER', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.accessToken;
+                    resultDiv.textContent = '✅ SUCCESS! Token: ' + authToken.substring(0, 50) + '...';
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = '❌ ERROR: ' + response.status;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = '❌ CONNECTION ERROR: ' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testAccounts() {
+            const resultDiv = document.getElementById('accounts-result');
+            
+            if (!authToken) {
+                resultDiv.textContent = '❌ Please get JWT token first!';
+                resultDiv.className = 'result error';
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8081/api/v1/accounts', {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.textContent = '✅ SUCCESS! Accounts: ' + JSON.stringify(data);
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = '❌ ERROR: ' + response.status;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = '❌ CONNECTION ERROR: ' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testPosting() {
+            const resultDiv = document.getElementById('posting-result');
+            resultDiv.textContent = 'Testing posting service...';
+            
+            try {
+                const response = await fetch('http://localhost:8082/api/v1/internal/balance?accountId=test');
+                resultDiv.textContent = '✅ SUCCESS! Status: ' + response.status;
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.textContent = '❌ ERROR: ' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testQuery() {
+            const resultDiv = document.getElementById('query-result');
+            resultDiv.textContent = 'Testing query service...';
+            
+            try {
+                const response = await fetch('http://localhost:8083/api/v1/webhooks/transaction-posted', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transactionId: 'test-123' })
+                });
+                resultDiv.textContent = '✅ SUCCESS! Status: ' + response.status;
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.textContent = '❌ ERROR: ' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testAudit() {
+            const resultDiv = document.getElementById('audit-result');
+            resultDiv.textContent = 'Testing audit service...';
+            
+            try {
+                const response = await fetch('http://localhost:8084/api/v1/audit?tenantId=550e8400-e29b-41d4-a716-446655440000');
+                resultDiv.textContent = '✅ SUCCESS! Status: ' + response.status;
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.textContent = '❌ ERROR: ' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+{
+  "info": {
+    "name": "LedgerPay Backend Services",
+    "description": "Complete API testing collection for LedgerPay microservices",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "TENANT-LEDGER-001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication Service",
+      "item": [
+        {
+          "name": "Login - Get JWT Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                },
+                {
+                  "key": "tenantId",
+                  "value": "{{tenantId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "role",
+                  "value": "ADMIN",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}:8090/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "port": "8090",
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Login to get JWT token for authentication"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.accessToken);",
+                  "    console.log('Token saved:', response.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Accounts Service",
+      "item": [
+        {
+          "name": "List All Accounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:8081/api/v1/accounts",
+              "host": ["{{baseUrl}}"],
+              "port": "8081",
+              "path": ["api", "v1", "accounts"]
+            },
+            "description": "Get list of all accounts"
+          }
+        },
+        {
+          "name": "Get Account by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:8081/api/v1/accounts/ACC-CASH-001-EUR",
+              "host": ["{{baseUrl}}"],
+              "port": "8081",
+              "path": ["api", "v1", "accounts", "ACC-CASH-001-EUR"]
+            },
+            "description": "Get specific account details"
+          }
+        },
+        {
+          "name": "Create New Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"ACC-TEST-001\",\n  \"name\": \"Test Account\",\n  \"type\": \"ASSET\",\n  \"currency\": \"EUR\",\n  \"status\": \"ACTIVE\",\n  \"ownerType\": \"ORG\",\n  \"ownerRefId\": \"ORG-001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}:8081/api/v1/accounts",
+              "host": ["{{baseUrl}}"],
+              "port": "8081",
+              "path": ["api", "v1", "accounts"]
+            },
+            "description": "Create a new account"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Posting Service (Transactions)",
+      "item": [
+        {
+          "name": "List Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:8082/api/v1/transactions?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "port": "8082",
+              "path": ["api", "v1", "transactions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of transactions"
+          }
+        },
+        {
+          "name": "Create Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reference\": \"TXN-{{$timestamp}}\",\n  \"timestamp\": \"2025-10-23T12:00:00Z\",\n  \"tenantId\": \"{{tenantId}}\",\n  \"lines\": [\n    {\n      \"accountId\": \"ACC-CASH-001-EUR\",\n      \"debit\": 1000.00,\n      \"credit\": 0.00,\n      \"memo\": \"Test debit transaction\"\n    },\n    {\n      \"accountId\": \"ACC-SALES-003-EUR\",\n      \"debit\": 0.00,\n      \"credit\": 1000.00,\n      \"memo\": \"Test credit transaction\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}:8082/api/v1/transactions",
+              "host": ["{{baseUrl}}"],
+              "port": "8082",
+              "path": ["api", "v1", "transactions"]
+            },
+            "description": "Create a new transaction with debit and credit lines"
+          }
+        },
+        {
+          "name": "Get Internal Balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:8082/api/v1/internal/balance",
+              "host": ["{{baseUrl}}"],
+              "port": "8082",
+              "path": ["api", "v1", "internal", "balance"]
+            },
+            "description": "Get internal system balance"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Query Service (Balance Lookup)",
+      "item": [
+        {
+          "name": "Get Account Balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:8083/api/v1/accounts/ACC-CASH-001-EUR/balance",
+              "host": ["{{baseUrl}}"],
+              "port": "8083",
+              "path": ["api", "v1", "accounts", "ACC-CASH-001-EUR", "balance"]
+            },
+            "description": "Get balance for specific account"
+          }
+        },
+        {
+          "name": "Transaction Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionId\": \"TXN-{{$timestamp}}\",\n  \"accountId\": \"ACC-CASH-001-EUR\",\n  \"amount\": 1000.00,\n  \"currency\": \"EUR\",\n  \"type\": \"DEBIT\",\n  \"timestamp\": \"2025-10-23T12:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}:8083/api/v1/transactions/webhook",
+              "host": ["{{baseUrl}}"],
+              "port": "8083",
+              "path": ["api", "v1", "transactions", "webhook"]
+            },
+            "description": "Send transaction webhook notification"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Audit Service",
+      "item": [
+        {
+          "name": "List Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:8084/api/v1/audit?tenantId={{tenantId}}&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "port": "8084",
+              "path": ["api", "v1", "audit"],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "{{tenantId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated audit logs for tenant"
+          }
+        },
+        {
+          "name": "Create Audit Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"ACCOUNT_CREATED\",\n  \"entity\": \"Account\",\n  \"entityId\": \"ACC-TEST-001\",\n  \"actor\": \"admin\",\n  \"tenantId\": \"{{tenantId}}\",\n  \"timestamp\": \"2025-10-23T12:00:00Z\",\n  \"details\": \"New account created for testing purposes\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}:8084/api/v1/audit",
+              "host": ["{{baseUrl}}"],
+              "port": "8084",
+              "path": ["api", "v1", "audit"]
+            },
+            "description": "Create a new audit log entry"
+          }
+        }
+      ]
+    }
+  ]
+}
