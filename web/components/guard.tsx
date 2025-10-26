@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { isAuthenticated, loadSessionFromStorage } from "@/lib/auth";
 
-const PUBLIC_ROUTES = new Set<string>(["/login"]);
+const PUBLIC_ROUTES = new Set<string>(["/", "/login", "/register"]);
 
 export function Guard({ children }: { children: React.ReactNode }){
   const router = useRouter();

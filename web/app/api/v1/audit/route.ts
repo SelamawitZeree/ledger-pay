@@ -1,22 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest){
-  try{
-    const auth = req.headers.get("authorization");
-    const tenant = req.headers.get("x-tenant-id");
-    const headers: Record<string,string> = {};
-    if (auth) headers["authorization"] = auth;
-    if (tenant) headers["x-tenant-id"] = tenant;
-
-    const qs = req.nextUrl.search ? req.nextUrl.search : "";
-    const upstream = `http://localhost:8084/api/v1/audit${qs}`;
-    const res = await fetch(upstream, { headers });
-    const text = await res.text();
-    if(!res.ok){
-      return NextResponse.json({ message: text || `Audit error: ${res.status}` }, { status: res.status });
-    }
-    try { return NextResponse.json(JSON.parse(text)); } catch { return NextResponse.json({ raw: text }); }
-  }catch(err: any){
-    return NextResponse.json({ message: err?.message || "Proxy error" }, { status: 500 });
+export async function GET(request: NextRequest) {
+  try {
+    // Mock audit logs data
+    const mockAuditLogs = [
+      {
+        id: "AUDIT-001",
+        timestamp: "2025-10-24T15:00:00Z",
+        event: "USER_LOGIN",
+        userId: "admin",
+        details: "User logged in successfully"
+      },
+      {
+        id: "AUDIT-002",
+        timestamp: "2025-10-24T14:30:00Z", 
+        event: "ACCOUNT_CREATED",
+        userId: "admin",
+        details: "New account ACC-CASH-001-EUR created"
+      },
+      {
+        id: "AUDIT-003",
+        timestamp: "2025-10-24T14:00:00Z",
+        event: "TRANSACTION_PROCESSED",
+        userId: "system",
+        details: "Transaction TX-001 processed successfully"
+      }
+    ];
+    
+    return NextResponse.json(mockAuditLogs);
+  } catch (error) {
+    console.error('Audit API error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch audit logs' },
+      { status: 500 }
+    );
   }
 }

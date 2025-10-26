@@ -73,7 +73,7 @@ export function hasRole(requiredRole: string) {
 
 export function hasAnyRole(roles: string[]) {
   const userRole = getRole();
-  return roles.includes(userRole);
+  return userRole ? roles.includes(userRole) : false;
 }
 
 export function isAdmin() {
